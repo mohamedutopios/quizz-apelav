@@ -49,4 +49,5 @@ export const api = {
   adminQuizStatus:   ()        => request('/api/admin/status'),
   adminSetStatus:    (status)  => request('/api/admin/status', { method: 'POST', body: { status } }),
   adminAttempt:      (id)      => request(`/api/admin/attempts/${id}`),
+  adminReset:        ()        => request('/api/admin/reset', { method: 'POST', body: { confirm: 'RESET' } }),
 };

@@ -171,6 +171,98 @@ function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* Zone danger : reset complet du quiz */}
+      <ResetQuizSection onReset={load} stats={stats} />
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------
+function ResetQuizSection({ onReset, stats }) {
+  const [confirming, setConfirming] = useState(false);
+  const [acting, setActing] = useState(false);
+  const [lastResult, setLastResult] = useState(null);
+
+  const reset = async () => {
+    setActing(true);
+    setLastResult(null);
+    try {
+      const r = await api.adminReset();
+      setLastResult({
+        ok: true,
+        ...r,
+      });
+      setConfirming(false);
+      await onReset();
+    } catch (err) {
+      setLastResult({ ok: false, error: err.message });
+    } finally {
+      setActing(false);
+    }
+  };
+
+  return (
+    <div className="card p-5 border-2 border-bordeaux-600/40 bg-bordeaux-600/5 mt-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-widest text-bordeaux-700 font-semibold">
+            ⚠ Zone dangereuse
+          </p>
+          <p className="font-serif text-lg text-ink-900 mt-1">
+            Réinitialiser complètement le quiz
+          </p>
+          <p className="text-sm text-ink-800/70 mt-1">
+            Supprime <strong>tous les participants</strong> ({stats.totalUsers}) et <strong>toutes leurs réponses</strong>.
+            Le quiz repasse en mode « En attente ». Les questions et le compte admin sont conservés.
+            Cette action est <strong>irréversible</strong>.
+          </p>
+        </div>
+
+        {!confirming ? (
+          <button
+            onClick={() => setConfirming(true)}
+            className="btn-secondary py-2 px-5 text-sm text-bordeaux-700 border-bordeaux-600/40
+                       hover:bg-bordeaux-600 hover:text-white whitespace-nowrap"
+          >
+            🗑 Réinitialiser le quiz
+          </button>
+        ) : (
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={reset}
+              disabled={acting}
+              className="btn-primary py-2 px-5 text-sm bg-bordeaux-600 hover:bg-bordeaux-700"
+            >
+              {acting ? 'Suppression…' : 'Oui, tout effacer'}
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={acting}
+              className="btn-ghost py-2 px-5 text-sm"
+            >
+              Annuler
+            </button>
+          </div>
+        )}
+      </div>
+
+      {lastResult && (
+        <div className={`mt-4 rounded-xl p-3 text-sm
+                        ${lastResult.ok
+                          ? 'bg-green-50 text-green-800 border border-green-200'
+                          : 'bg-bordeaux-600/10 text-bordeaux-700'}`}>
+          {lastResult.ok ? (
+            <>
+              ✓ Reset effectué : <strong>{lastResult.deletedParticipants}</strong> participant(s), {' '}
+              <strong>{lastResult.deletedAttempts}</strong> tentative(s) et {' '}
+              <strong>{lastResult.deletedAnswers}</strong> réponse(s) supprimées.
+            </>
+          ) : (
+            <>✗ Erreur : {lastResult.error}</>
+          )}
+        </div>
+      )}
     </div>
   );
 }

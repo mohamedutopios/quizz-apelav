@@ -77,7 +77,8 @@ export default function Podium() {
   return (
     <div
       onClick={handleClick}
-      className="min-h-screen w-full overflow-hidden cursor-pointer select-none relative"
+      className="min-h-screen w-full overflow-hidden cursor-pointer select-none
+                 flex flex-col"
       style={{
         background:
           'radial-gradient(at 20% 0%, #F0D2CF 0%, transparent 60%), ' +
@@ -85,47 +86,47 @@ export default function Podium() {
           '#FBF3F2',
       }}
     >
-      {/* Bandeau supérieur */}
-      <header className="absolute top-0 inset-x-0 py-6 sm:py-10 text-center z-10">
-        <p className="heading-script text-5xl sm:text-7xl text-bordeaux-700 leading-none">
+      {/* Bandeau supérieur — dans le flux normal, plus petit pour laisser de la place au podium */}
+      <header className="shrink-0 py-3 sm:py-5 text-center">
+        <p className="heading-script text-4xl sm:text-5xl text-bordeaux-700 leading-none">
           Apelav
         </p>
-        <p className="font-serif italic text-lg sm:text-2xl text-ink-800/70 mt-1">
+        <p className="font-serif italic text-sm sm:text-lg text-ink-800/70 mt-1">
           Quiz Concours 2026 — Résultats
         </p>
       </header>
 
-      {/* Aide discrète en bas */}
-      <footer className="absolute bottom-4 inset-x-0 text-center text-xs text-ink-800/40 z-10 px-4">
-        Cliquez (ou Espace) pour révéler la position suivante · R pour recommencer · F plein écran
-        <span className="mx-2">·</span>
-        Étape {revealed} / 3
-      </footer>
-
-      {/* Podium */}
-      <main className="absolute inset-0 flex items-end justify-center pb-24 sm:pb-32 px-4">
+      {/* Podium — prend tout l'espace, aligné en bas */}
+      <main className="flex-1 flex items-end justify-center px-4 pb-4 min-h-0">
         <div className="flex items-end gap-3 sm:gap-6 lg:gap-10 w-full max-w-6xl justify-center">
           <PodiumPlace
             rank={3}
             participant={winner3}
             revealed={revealed >= 1}
-            heightClass="h-44 sm:h-56 lg:h-64"
+            heightClass="h-28 sm:h-40 lg:h-52"
           />
           <PodiumPlace
             rank={1}
             participant={winner1}
             revealed={revealed >= 3}
-            heightClass="h-72 sm:h-96 lg:h-[28rem]"
+            heightClass="h-52 sm:h-72 lg:h-[22rem]"
             isWinner
           />
           <PodiumPlace
             rank={2}
             participant={winner2}
             revealed={revealed >= 2}
-            heightClass="h-56 sm:h-72 lg:h-80"
+            heightClass="h-40 sm:h-56 lg:h-64"
           />
         </div>
       </main>
+
+      {/* Aide en bas */}
+      <footer className="shrink-0 py-3 text-center text-xs text-ink-800/40 px-4">
+        Cliquez (ou Espace) pour révéler la position suivante · R pour recommencer · F plein écran
+        <span className="mx-2">·</span>
+        Étape {revealed} / 3
+      </footer>
 
       {/* Confettis pour le 1er */}
       {revealed >= 3 && winner1 && <Confetti />}

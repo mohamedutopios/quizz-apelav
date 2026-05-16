@@ -8,7 +8,7 @@ import {
   deleteQuestion,
   getAttemptDetails,
 } from '../services/admin.service.js';
-import { getQuizStatus, setQuizStatus } from '../services/settings.service.js';
+import { getQuizStatus, setQuizStatus, resetQuiz } from '../services/settings.service.js';
 
 export default async function adminRoutes(fastify) {
   // Tous les endpoints admin protégés
@@ -149,6 +149,36 @@ export default async function adminRoutes(fastify) {
     async (req, reply) => {
       try {
         return await deleteQuestion(req.params.id);
+      } catch (err) {
+        if (err.statusCode) return reply.code(err.statusCode).send({ error: err.message });
+        throw err;
+      }
+    }
+  );
+
+  // Reset complet du quiz (action irréversible)
+  // Supprime tous les participants + leurs tentatives + leurs réponses
+  // et remet le quiz en mode "disabled". Les admins et les questions sont conservés.
+  fastify.post(
+    '/api/admin/reset',
+    {
+      ...adminGuard,
+      schema: {
+        body: {
+          type: 'object',
+          required: ['confirm'],
+          properties: {
+            // Le client doit envoyer { confirm: 'RESET' } pour éviter les déclenchements accidentels
+            confirm: { type: 'string', const: 'RESET' },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      try {
+        const result = await resetQuiz();
+        req.log.warn({ adminId: req.user.sub, ...result }, 'Quiz reset complet effectué');
+        return { ok: true, ...result };
       } catch (err) {
         if (err.statusCode) return reply.code(err.statusCode).send({ error: err.message });
         throw err;
