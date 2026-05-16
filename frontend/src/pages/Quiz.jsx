@@ -199,11 +199,11 @@ export default function Quiz() {
           <h1 className="heading-script text-5xl text-bordeaux-700">Prêt ?</h1>
           <p className="font-serif text-xl">Vous allez commencer le quiz APELAV 2026</p>
           <ul className="text-left max-w-md mx-auto space-y-2 text-ink-800/80">
-            <li>• <strong>17 questions</strong> à choix unique</li>
+            <li>• Des <strong>questions à choix unique</strong></li>
             <li>• <strong>10 minutes</strong> chronométrées</li>
             <li>• <strong>1 seule tentative</strong> par personne</li>
-            <li>• Score final ramené sur <strong>20</strong></li>
-            <li>• En cas d'égalité, le <strong>temps</strong> départage</li>
+            <li>• Score final sur <strong>20</strong></li>
+            <li>• En cas d'égalité, la <strong>durée</strong> vous départagera</li>
           </ul>
           {error && (
             <div className="rounded-xl bg-bordeaux-600/10 text-bordeaux-700 p-3 text-sm">
