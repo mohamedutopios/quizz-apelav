@@ -1,0 +1,134 @@
+name: apelav-quizz
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: apelav-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpwd_change_me}
+      MYSQL_DATABASE: ${DB_NAME:-apelav_quizz}
+      MYSQL_USER: ${DB_USER:-apelav}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-apelav_pwd}
+    command:
+      - --max_connections=300
+      - --innodb-buffer-pool-size=256M
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+    networks:
+      - apelav_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpwd_change_me}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # Pas d'exposition de port en production (accessible uniquement via le réseau interne)
+    # Décommenter pour debug local :
+    # ports:
+    #   - "127.0.0.1:3306:3306"
+
+  redis:
+    image: redis:7-alpine
+    container_name: apelav-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    networks:
+      - apelav_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: apelav-backend:1.0
+    container_name: apelav-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      HOST: 0.0.0.0
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-apelav}
+      DB_PASSWORD: ${DB_PASSWORD:-apelav_pwd}
+      DB_NAME: ${DB_NAME:-apelav_quizz}
+      DB_POOL: 40
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis}
+      QUIZ_DURATION_MS: ${QUIZ_DURATION_MS:-600000}
+      BCRYPT_COST: ${BCRYPT_COST:-12}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://localhost}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin&admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Apelav2026!}
+      ADMIN_NOM: ${ADMIN_NOM:-Admin}
+      ADMIN_PRENOM: ${ADMIN_PRENOM:-Admin}
+    depends_on:
+      mysql:    { condition: service_healthy }
+      redis:    { condition: service_healthy }
+    networks:
+      - apelav_net
+    # Backend non exposé directement ; accédé via nginx
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: apelav-frontend:1.0
+    container_name: apelav-frontend
+    restart: "no"
+    # On l'utilise seulement comme volume source pour les fichiers statiques
+    # (alternative : volume nommé partagé)
+    command: ["sh", "-c", "echo 'build stage done' && tail -f /dev/null"]
+    networks:
+      - apelav_net
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: apelav-nginx:1.0
+    container_name: apelav-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs:ro
+      # Récupère les assets du build frontend
+      - frontend_dist:/usr/share/nginx/html:ro
+    depends_on:
+      backend:   { condition: service_started }
+      frontend:  { condition: service_started }
+    networks:
+      - apelav_net
+
+  # Petit service utilitaire pour copier le build frontend dans le volume partagé
+  frontend-copy:
+    image: apelav-frontend:1.0
+    container_name: apelav-frontend-copy
+    command: ["sh", "-c", "cp -r /usr/share/nginx/html/. /export/ && echo 'frontend assets copiés'"]
+    volumes:
+      - frontend_dist:/export
+    depends_on:
+      - frontend
+    networks:
+      - apelav_net
+    restart: "no"
+
+volumes:
+  mysql_data:
+    driver: local
+  frontend_dist:
+    driver: local
+
+networks:
+  apelav_net:
+    driver: bridge
