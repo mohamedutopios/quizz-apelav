@@ -73,6 +73,7 @@ export default async function adminRoutes(fastify) {
           required: ['enonce', 'answers'],
           properties: {
             enonce: { type: 'string', minLength: 3, maxLength: 1000 },
+            points: { type: 'integer', minimum: 1, maximum: 10 },
             active: { type: 'boolean' },
             answers: {
               type: 'array',
@@ -112,6 +113,7 @@ export default async function adminRoutes(fastify) {
           required: ['enonce', 'answers'],
           properties: {
             enonce: { type: 'string', minLength: 3, maxLength: 1000 },
+            points: { type: 'integer', minimum: 1, maximum: 10 },
             active: { type: 'boolean' },
             answers: {
               type: 'array',

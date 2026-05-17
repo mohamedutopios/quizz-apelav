@@ -475,6 +475,12 @@ function Questions() {
           <div key={q.id} className="card p-5">
             <div className="flex items-start gap-3">
               <span className="badge-pill text-xs">#{q.ordre}</span>
+              {q.points > 1 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                                 bg-beige-300 text-bordeaux-700 text-xs font-semibold">
+                  ★ {q.points} pts
+                </span>
+              )}
               <div className="flex-1">
                 <p className="heading-serif text-lg">{q.enonce}</p>
                 <ul className="mt-3 space-y-1 text-sm">
@@ -503,6 +509,7 @@ function Questions() {
 
 function QuestionEditor({ initial, onClose, onSaved }) {
   const [enonce, setEnonce] = useState(initial?.enonce || '');
+  const [points, setPoints] = useState(initial?.points || 1);
   const [active, setActive] = useState(initial ? initial.active : true);
   const [answers, setAnswers] = useState(
     initial?.answers?.map((a) => ({ texte: a.texte, isCorrect: a.isCorrect })) ||
@@ -531,7 +538,12 @@ function QuestionEditor({ initial, onClose, onSaved }) {
   const save = async () => {
     setError(''); setSaving(true);
     try {
-      const payload = { enonce: enonce.trim(), active, answers };
+      const payload = {
+        enonce: enonce.trim(),
+        points: parseInt(points, 10) || 1,
+        active,
+        answers,
+      };
       if (initial) await api.adminUpdateQ(initial.id, payload);
       else         await api.adminCreateQ(payload);
       await onSaved();
@@ -557,6 +569,19 @@ function QuestionEditor({ initial, onClose, onSaved }) {
         onChange={(e) => setEnonce(e.target.value)}
         placeholder="Énoncé de la question…"
       />
+
+      <div className="mt-3 flex items-center gap-3">
+        <label className="text-sm font-medium text-ink-800">Points :</label>
+        <input
+          type="number" min="1" max="10"
+          className="input w-20 text-center"
+          value={points}
+          onChange={(e) => setPoints(e.target.value)}
+        />
+        <span className="text-xs text-ink-800/60">
+          (1 par défaut · 2 pour les questions difficiles)
+        </span>
+      </div>
 
       <div className="mt-4 space-y-2">
         {answers.map((a, i) => (
@@ -713,9 +738,17 @@ function AttemptDetailModal({ attemptId, onClose }) {
                           {isCorrect ? '✓' : noAnswer ? '○' : '✗'}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs uppercase tracking-widest text-ink-800/50">
-                            Question {q.ordre}
-                          </p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs uppercase tracking-widest text-ink-800/50">
+                              Question {q.ordre}
+                            </p>
+                            {q.points > 1 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                                               bg-beige-300 text-bordeaux-700 text-xs font-semibold">
+                                ★ {q.points} pts
+                              </span>
+                            )}
+                          </div>
                           <p className="heading-serif text-lg mt-0.5">{q.enonce}</p>
                           <div className="mt-3 space-y-1.5 text-sm">
                             {q.answers.map((a) => {

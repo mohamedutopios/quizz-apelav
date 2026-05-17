@@ -86,15 +86,8 @@ export default function Podium() {
           '#FBF3F2',
       }}
     >
-      {/* Bandeau supérieur — dans le flux normal, plus petit pour laisser de la place au podium */}
-      <header className="shrink-0 py-3 sm:py-5 text-center">
-        <p className="heading-script text-4xl sm:text-5xl text-bordeaux-700 leading-none">
-          Apelav
-        </p>
-        <p className="font-serif italic text-sm sm:text-lg text-ink-800/70 mt-1">
-          Quiz Concours 2026 — Résultats
-        </p>
-      </header>
+      {/* Espace en haut (pas de titre) */}
+      <div className="shrink-0 h-6 sm:h-10"></div>
 
       {/* Podium — prend tout l'espace, aligné en bas */}
       <main className="flex-1 flex items-end justify-center px-4 pb-4 min-h-0">
@@ -121,11 +114,19 @@ export default function Podium() {
         </div>
       </main>
 
-      {/* Aide en bas */}
-      <footer className="shrink-0 py-3 text-center text-xs text-ink-800/40 px-4">
-        Cliquez (ou Espace) pour révéler la position suivante · R pour recommencer · F plein écran
-        <span className="mx-2">·</span>
-        Étape {revealed} / 3
+      {/* Titre déplacé en BAS (avant : en haut, chevauchait la carte du 1er) */}
+      <footer className="shrink-0 text-center pb-2 px-4">
+        <p className="heading-script text-3xl sm:text-4xl text-bordeaux-700 leading-none">
+          Apelav
+        </p>
+        <p className="font-serif italic text-xs sm:text-sm text-ink-800/70 mt-1">
+          Quiz Concours 2026 — Résultats
+        </p>
+        <p className="mt-2 text-[10px] sm:text-xs text-ink-800/40">
+          Cliquez (ou Espace) pour révéler la position suivante · R pour recommencer · F plein écran
+          <span className="mx-2">·</span>
+          Étape {revealed} / 3
+        </p>
       </footer>
 
       {/* Confettis pour le 1er */}

@@ -87,7 +87,7 @@ export async function getDashboardStats() {
 
 export async function listQuestionsAdmin() {
   const [questions] = await pool.query(
-    `SELECT id, enonce, ordre, active FROM questions ORDER BY ordre ASC, id ASC`
+    `SELECT id, enonce, ordre, points, active FROM questions ORDER BY ordre ASC, id ASC`
   );
   if (questions.length === 0) return [];
   const ids = questions.map((q) => q.id);
@@ -111,20 +111,22 @@ export async function listQuestionsAdmin() {
     id: q.id,
     enonce: q.enonce,
     ordre: q.ordre,
+    points: q.points || 1,
     active: !!q.active,
     answers: byQ.get(q.id) || [],
   }));
 }
 
-export async function createQuestion({ enonce, active = true, answers }) {
+export async function createQuestion({ enonce, points = 1, active = true, answers }) {
   validateQuestionPayload({ enonce, answers });
+  const pts = Math.max(1, Math.min(10, parseInt(points, 10) || 1));
   return withTransaction(async (conn) => {
     const [[ord]] = await conn.query(
       `SELECT COALESCE(MAX(ordre), 0) + 1 AS next FROM questions`
     );
     const [ins] = await conn.query(
-      `INSERT INTO questions (enonce, ordre, active) VALUES (?, ?, ?)`,
-      [enonce.trim(), ord.next, active ? 1 : 0]
+      `INSERT INTO questions (enonce, ordre, points, active) VALUES (?, ?, ?, ?)`,
+      [enonce.trim(), ord.next, pts, active ? 1 : 0]
     );
     const qid = ins.insertId;
     for (let i = 0; i < answers.length; i++) {
@@ -138,19 +140,19 @@ export async function createQuestion({ enonce, active = true, answers }) {
   });
 }
 
-export async function updateQuestion(id, { enonce, active, answers }) {
+export async function updateQuestion(id, { enonce, points = 1, active, answers }) {
   validateQuestionPayload({ enonce, answers });
+  const pts = Math.max(1, Math.min(10, parseInt(points, 10) || 1));
   return withTransaction(async (conn) => {
     const [chk] = await conn.query(`SELECT id FROM questions WHERE id = ?`, [id]);
     if (chk.length === 0) {
       const e = new Error('Question introuvable'); e.statusCode = 404; throw e;
     }
     await conn.query(
-      `UPDATE questions SET enonce = ?, active = ? WHERE id = ?`,
-      [enonce.trim(), active ? 1 : 0, id]
+      `UPDATE questions SET enonce = ?, points = ?, active = ? WHERE id = ?`,
+      [enonce.trim(), pts, active ? 1 : 0, id]
     );
     // Approche simple : on supprime et on recrée les réponses
-    // (sûr car attempt_answers a un ON DELETE SET NULL sur answer_id)
     await conn.query(`DELETE FROM answers WHERE question_id = ?`, [id]);
     for (let i = 0; i < answers.length; i++) {
       const a = answers[i];
@@ -212,7 +214,7 @@ export async function getAttemptDetails(attemptId) {
 
   // Toutes les questions actives avec les réponses possibles + la réponse de l'utilisateur
   const [questions] = await pool.query(
-    `SELECT id, enonce, ordre FROM questions WHERE active = 1 ORDER BY ordre ASC, id ASC`
+    `SELECT id, enonce, ordre, points FROM questions WHERE active = 1 ORDER BY ordre ASC, id ASC`
   );
   const qIds = questions.map((q) => q.id);
   const [answers] = qIds.length
@@ -255,6 +257,7 @@ export async function getAttemptDetails(attemptId) {
       return {
         id: q.id,
         ordre: q.ordre,
+        points: q.points || 1,
         enonce: q.enonce,
         answers: answersByQ.get(q.id) || [],
         userAnswerId: given?.answer_id ?? null,

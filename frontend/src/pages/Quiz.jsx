@@ -196,15 +196,30 @@ export default function Quiz() {
     return (
       <div className="max-w-2xl mx-auto animate-fade-up">
         <div className="card p-8 sm:p-10 text-center space-y-6">
-          <h1 className="heading-script text-5xl text-bordeaux-700">Prêt ?</h1>
-          <p className="font-serif text-xl">Vous allez commencer le quiz APELAV 2026</p>
+          <h1 className="heading-script text-5xl text-bordeaux-700">Prêtes ?</h1>
           <ul className="text-left max-w-md mx-auto space-y-2 text-ink-800/80">
             <li>• Des <strong>questions à choix unique</strong></li>
             <li>• <strong>10 minutes</strong> chronométrées</li>
             <li>• <strong>1 seule tentative</strong> par personne</li>
             <li>• Score final sur <strong>20</strong></li>
-            <li>• En cas d'égalité, la <strong>durée</strong> vous départagera</li>
+            <li>• En cas d'égalité, <strong>le temps de réponse</strong> vous départagera donc soyez vives !</li>
           </ul>
+
+          {/* Que les meilleures gagnent ! Bismillah */}
+          <div className="pt-2 space-y-2">
+            <p className="font-serif text-lg italic text-ink-800/80">
+              Que les meilleures gagnent !
+            </p>
+            <p className="heading-script text-3xl text-bordeaux-700">
+              Bismillah
+            </p>
+            <p className="font-serif text-3xl text-bordeaux-700"
+               dir="rtl" lang="ar"
+               style={{ fontFamily: '"Amiri", "Cormorant Garamond", serif' }}>
+              بِسْمِ اللَّهِ
+            </p>
+          </div>
+
           {error && (
             <div className="rounded-xl bg-bordeaux-600/10 text-bordeaux-700 p-3 text-sm">
               {error}
@@ -247,9 +262,18 @@ export default function Quiz() {
       </div>
 
       <div className="card p-6 sm:p-8">
-        <h2 className="heading-serif text-2xl sm:text-3xl leading-snug mb-6">
-          {q.enonce}
-        </h2>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <h2 className="heading-serif text-2xl sm:text-3xl leading-snug flex-1">
+            {q.enonce}
+          </h2>
+          {q.points > 1 && (
+            <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1
+                             rounded-full bg-beige-300 text-bordeaux-700
+                             text-sm font-semibold whitespace-nowrap">
+              ★ {q.points} pts
+            </span>
+          )}
+        </div>
 
         <div className="space-y-3">
           {q.answers.map((a, idx) => {
@@ -330,10 +354,9 @@ export default function Quiz() {
 }
 
 function Results({ result, onLogout }) {
-  // Brief : "Une fois les 10 min passé, on est automatiquement exit de l'application"
-  // → on déconnecte automatiquement après affichage du remerciement
+  // Délai de déconnexion auto rallongé pour lire toute la phrase
   useEffect(() => {
-    const t = setTimeout(onLogout, 12000); // 12s pour lire la phrase
+    const t = setTimeout(onLogout, 18000); // 18s
     return () => clearTimeout(t);
   }, [onLogout]);
 
@@ -353,7 +376,7 @@ function Results({ result, onLogout }) {
         </p>
 
         {/* Phrase de remerciement religieuse */}
-        <div className="py-8 space-y-4">
+        <div className="py-6 space-y-3">
           <p className="font-serif text-4xl sm:text-5xl text-bordeaux-700"
              dir="rtl" lang="ar"
              style={{ fontFamily: '"Amiri", "Cormorant Garamond", serif' }}>
@@ -367,13 +390,27 @@ function Results({ result, onLogout }) {
           </p>
         </div>
 
-        <p className="text-sm text-ink-800/70 leading-relaxed">
-          Les résultats seront annoncés sur place par l'organisateur.<br />
-          <span className="italic">Barakallahu fikum</span> pour votre participation.
+        <p className="text-base text-ink-800/80 leading-relaxed max-w-lg mx-auto">
+          Je vous invite à vous restaurer après cette montée d'adrénaline et en attendant
+          impatiemment <span className="not-italic">;)</span>, les résultats qui vont vous être
+          communiqués par l'organisatrice.
         </p>
 
+        {/* Qu'Allah vous préserve... + Amine */}
+        <div className="pt-4 space-y-3">
+          <p className="font-serif text-lg text-ink-800/85 max-w-lg mx-auto leading-relaxed">
+            Qu'Allah vous préserve et récompense par le bien.
+          </p>
+          <p className="font-serif text-4xl text-bordeaux-700"
+             dir="rtl" lang="ar"
+             style={{ fontFamily: '"Amiri", "Cormorant Garamond", serif' }}>
+            آمين
+          </p>
+          <p className="heading-script text-2xl text-bordeaux-700">Amine</p>
+        </div>
+
         <p className="text-xs text-ink-800/50 italic pt-2">
-          Vous allez être automatiquement déconnecté…
+          Vous allez être automatiquement déconnectée…
         </p>
         <button onClick={onLogout} className="btn-secondary">
           Se déconnecter

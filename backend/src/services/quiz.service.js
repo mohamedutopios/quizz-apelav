@@ -8,7 +8,7 @@ import { getQuizStatus } from './settings.service.js';
  */
 export async function getQuizForParticipant() {
   const [questions] = await pool.query(
-    `SELECT id, enonce, ordre FROM questions WHERE active = 1 ORDER BY ordre ASC, id ASC`
+    `SELECT id, enonce, ordre, points FROM questions WHERE active = 1 ORDER BY ordre ASC, id ASC`
   );
   if (questions.length === 0) return [];
   const ids = questions.map((q) => q.id);
@@ -173,27 +173,50 @@ export async function submitAttempt({ userId, attemptId }) {
 
 /**
  * Finalise une tentative (calcule score + écrit l'état final).
+ * Score basé sur la somme des points pondérés (chaque question peut valoir 1 ou 2 pts).
  */
 async function finalizeInTx(conn, attemptId, durationMs, status) {
-  const [agg] = await conn.query(
-    `SELECT
-       (SELECT COUNT(*) FROM questions WHERE active = 1) AS total,
-       (SELECT COUNT(*) FROM attempt_answers WHERE attempt_id = ? AND is_correct = 1) AS correct`,
+  // Total maximum possible : somme des points de toutes les questions actives
+  const [[totalRow]] = await conn.query(
+    `SELECT COALESCE(SUM(points), 0) AS total_points, COUNT(*) AS total_questions
+     FROM questions WHERE active = 1`
+  );
+  const totalPoints = parseInt(totalRow.total_points, 10) || 0;
+  const totalQuestions = parseInt(totalRow.total_questions, 10) || 0;
+
+  // Points gagnés par cet utilisateur : somme des points des questions où il a bien répondu
+  const [[gainRow]] = await conn.query(
+    `SELECT COALESCE(SUM(q.points), 0) AS earned_points, COUNT(*) AS correct_count
+     FROM attempt_answers aa
+     JOIN questions q ON q.id = aa.question_id
+     WHERE aa.attempt_id = ? AND aa.is_correct = 1`,
     [attemptId]
   );
-  const total = parseInt(agg[0].total, 10) || 0;
-  const correct = parseInt(agg[0].correct, 10) || 0;
-  const score = total > 0 ? (correct / total) * config.scoreMax : 0;
+  const earnedPoints = parseInt(gainRow.earned_points, 10) || 0;
+  const correctCount = parseInt(gainRow.correct_count, 10) || 0;
+
+  // Score sur 20 = (points obtenus / points totaux) × 20
+  // Avec le seed actuel (total = 20 pts), le score = earnedPoints directement
+  const score = totalPoints > 0 ? (earnedPoints / totalPoints) * config.scoreMax : 0;
 
   await conn.query(
     `UPDATE quiz_attempts
      SET finished_at = NOW(), duration_ms = ?, correct_count = ?, total_count = ?,
          score_sur_20 = ?, status = ?
      WHERE id = ?`,
-    [durationMs, correct, total, score.toFixed(2), status, attemptId]
+    [durationMs, correctCount, totalQuestions, score.toFixed(2), status, attemptId]
   );
 
-  return { attemptId, correct, total, score: parseFloat(score.toFixed(2)), durationMs, status };
+  return {
+    attemptId,
+    correct: correctCount,
+    total: totalQuestions,
+    earnedPoints,
+    totalPoints,
+    score: parseFloat(score.toFixed(2)),
+    durationMs,
+    status,
+  };
 }
 
 async function finalizeTimeoutInTx(conn, attemptId) {

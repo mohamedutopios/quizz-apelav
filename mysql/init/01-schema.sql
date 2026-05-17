@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS questions (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   enonce TEXT NOT NULL,
   ordre INT NOT NULL DEFAULT 0,
+  points INT NOT NULL DEFAULT 1,         -- Pondération (1 par défaut, 2 pour les questions difficiles)
   active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -122,3 +123,20 @@ CREATE TABLE IF NOT EXISTS quiz_settings (
 
 -- Insertion de la ligne singleton (état initial : disabled)
 INSERT IGNORE INTO quiz_settings (id, status) VALUES (1, 'disabled');
+
+-- ----------------------------------------------------------------------------
+-- Migration : ajout de la colonne 'points' si elle n'existe pas
+-- Cette section permet aux BDD existantes (créées avant cette version) de
+-- recevoir la nouvelle colonne sans avoir à reset le volume.
+-- ----------------------------------------------------------------------------
+SET @col_exists := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'questions'
+    AND COLUMN_NAME = 'points'
+);
+SET @sql := IF(@col_exists = 0,
+  'ALTER TABLE questions ADD COLUMN points INT NOT NULL DEFAULT 1 AFTER ordre',
+  'SELECT "Colonne points déjà présente"'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
