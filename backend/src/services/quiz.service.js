@@ -73,7 +73,7 @@ export async function startOrResumeAttempt(userId) {
     // Aucune tentative existante : on vérifie que l'admin a activé le quiz
     const { status } = await getQuizStatus();
     if (status === 'disabled') {
-      const e = new Error("Le quiz n'a pas encore été ouvert par l'organisateur.");
+      const e = new Error("Le quiz n'a pas encore été ouvert par l'organisatrice.");
       e.statusCode = 423; // Locked
       e.payload = { quizStatus: status };
       throw e;

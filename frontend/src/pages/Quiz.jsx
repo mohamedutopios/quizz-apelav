@@ -163,7 +163,7 @@ export default function Quiz() {
         <div className="card p-8 sm:p-12 text-center space-y-6">
           <div className="inline-block">
             <span className="badge-pill">
-              {quizStatus === 'closed' ? 'Concours clôturé' : 'En attente de l\'organisateur'}
+              {quizStatus === 'closed' ? 'Concours clôturé' : 'En attente de l\'organisatrice'}
             </span>
           </div>
           <h1 className="heading-script text-5xl text-bordeaux-700">
@@ -177,14 +177,8 @@ export default function Quiz() {
             <>
               <p className="font-serif text-xl text-ink-800/80 leading-relaxed">
                 Le quiz n'est pas encore ouvert. Restez sur cette page :<br />
-                le démarrage se fera <strong>automatiquement</strong> dès que l'organisateur lancera le concours.
+                le démarrage se fera <strong>automatiquement</strong> dès que l'organisatrice lancera le concours.
               </p>
-              <div className="flex justify-center pt-2">
-                <span className="inline-flex items-center gap-2 text-bordeaux-700">
-                  <span className="w-2 h-2 bg-bordeaux-600 rounded-full animate-pulse-slow"></span>
-                  <span className="text-sm">Vérification toutes les 3 secondes</span>
-                </span>
-              </div>
             </>
           )}
         </div>
