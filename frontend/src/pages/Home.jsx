@@ -13,10 +13,10 @@ export default function Home() {
           Quiz<br />Apelav
         </h1>
         <p className="heading-serif text-2xl sm:text-3xl text-bordeaux-700">
-          Tentez votre chance et gagnez de nombreux lots avec notre quizz
+          Tentez votre chance et gagnez de nombreux lots avec notre quiz
         </p>
         <p className="text-ink-800/75 max-w-md leading-relaxed">
-          Quizz · 10 minutes chrono · une seule tentative.
+          Quiz · 10 minutes chrono · une seule tentative.
           Le meilleur score remporte la victoire. Bonne chance !
         </p>
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
